@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+<script type="text/javascript" src="node_modules/lodash/lodash.min.js"></script>
+<script type="text/javascript" src="src/HilbertCurves.js"></script>
+<script type="text/javascript" src="src/r-tree.js"></script>
+<script type="text/javascript">
+var canv = document.createElement("canvas");
+canv.width = window.innerWidth;
+canv.height = 600;
+document.body.appendChild(canv);
+var ctx = canv.getContext("2d");
+
+var drawRect = function( rect, level ) {
+	if( rect.children.length == 0 ){
+		ctx.strokeStyle="#FF0000";
+		ctx.setLineDash([3,3]);
+		ctx.strokeRect( rect.x, canv.height-rect.y, rect.width, -rect.height);
+
+		ctx.setLineDash([]);
+		ctx.fillStyle="#FF0000";
+		ctx.font = "20px serif";
+			ctx.fillText(rect.data, rect.x + rect.width/2, canv.height-rect.y-rect.height/2);
+	}
+	else if( rect.children.length > 0 ) {
+		ctx.strokeStyle="#000000";
+		ctx.setLineDash([15,15]);
+		ctx.strokeRect( rect.x, canv.height-rect.y, rect.width, -rect.height);
+		
+		ctx.setLineDash([]);
+		ctx.font = "20px serif";
+		ctx.fillStyle="#000000";
+			ctx.fillText(level.toString(), rect.x + rect.width -20, canv.height-rect.y-rect.height+20);
+
+		_.forEach( rect.children, function( r ) {
+			drawRect( r, level + 1 );
+		});
+	}
+}
+
+var tree = new RTree( 3, 7 );
+var maxX = (canv.width - 100);
+var maxY = (canv.height - 100);
+var minWidth = 50;
+var minHeight = 50;
+var maxWidth = 100;
+var maxHeight = 100;
+var nodes = _.map( _.range(10), function( i ){
+	var data = {};
+	data.x = Math.floor(Math.random() * (maxX-minWidth));
+	data.y = Math.floor(Math.random() * (maxY-minHeight));
+
+	data.width = Math.min(maxWidth, Math.floor(Math.random() * (maxX - data.x)) + minWidth);
+	data.height = Math.min(maxHeight, Math.floor(Math.random() * (maxY - data.y	)) + minHeight);
+	data.data = i;
+	return data;
+});
+
+tree.batchInsert( nodes );
+drawRect( tree.root, 1 );
+
+// for( var i=0; i<nodes.length; i++){
+// 	setTimeout(function(i){
+// 		tree.insert( nodes[i] );
+// 		ctx.clearRect(0,0,canv.width,canv.height);
+// 		drawRect( tree.root, 1 );
+// 	}, 300*i, i );
+// }
+
+console.log( tree );
+drawRect( new RTreeRectangle(0,0,300,300,null), 1 );
+console.log(tree.search( {x: 0, y: 0, width: 300, height: 300} ));
+</script>
+</body>
+</html>
