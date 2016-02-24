@@ -1,6 +1,6 @@
 module HilbertCurves{
 	export function toHilbertCoordinates( maxCoordinate: number, x: number, y: number ): number{
-		var rx, ry, s, hilbertIndex = 0;
+		var rx: any, ry: any, s: number, hilbertIndex: number = 0;
 
 		for( s = Math.floor(maxCoordinate/2); s > 0; s /= 2){
 			rx = (x & s) > 0;
@@ -16,7 +16,7 @@ module HilbertCurves{
 	}
 
 	export function fromHilbertCoordinates( maxCoordinate: number, hilbertIndex: number ): number[] {
-		var x, y, rx, ry, s, t = hilbertIndex;
+		var x: number, y: number, rx: any, ry: any, s: number, t: number = hilbertIndex;
 	    
 	    x = y = 0;
 
@@ -36,8 +36,8 @@ module HilbertCurves{
 	    return [x, y];
 	}
 
-	function rotate( maxCoordinate: number, x: number, y: number, rx: number, ry: number ): number[]{
-		var t;
+	function rotate( maxCoordinate: number, x: number, y: number, rx: any, ry: any ): number[]{
+		var t: number;
 
 		if (ry == 0) {
 	        if (rx == 1) {
