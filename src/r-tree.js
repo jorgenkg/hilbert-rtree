@@ -34,14 +34,13 @@ var RTreeRectangle = (function () {
             return anotherRect.height * anotherRect.width;
         }
         else {
-            return ((Math.max(this.y + this.height, anotherRect.y + anotherRect.height) - Math.min(this.y, anotherRect.y)) * (Math.max(this.x + this.width, anotherRect.x + anotherRect.width) - Math.min(this.x, anotherRect.x)) - this.getArea()) / this.getArea();
+            return ((Math.max(this.y + this.height, anotherRect.y + anotherRect.height) - Math.min(this.y, anotherRect.y)) * (Math.max(this.x + this.width, anotherRect.x + anotherRect.width) - Math.min(this.x, anotherRect.x)) - this.getArea());
         }
     };
     RTreeRectangle.prototype.getArea = function () {
         return this.height * this.width;
     };
     RTreeRectangle.prototype.splitIntoSiblings = function () {
-        console.log("* splitting:", this);
         var sibling1 = new RTreeRectangle(Infinity, Infinity, 0, 0, null);
         var sibling2 = new RTreeRectangle(Infinity, Infinity, 0, 0, null);
         var maxCoordinate = _.chain(this.children)
