@@ -1,4 +1,4 @@
-/// <reference path="../libs/lodash.d.ts" />
+/// <reference path="../type-definitions/lodash.d.ts" />
 /// <reference path="HilbertCurves.ts" />
 
 interface DataEntry{
@@ -49,7 +49,7 @@ class RTreeRectangle{
     		return anotherRect.height * anotherRect.width;
     	}
     	else{
-    		return ((Math.max( this.y + this.height, anotherRect.y + anotherRect.height ) - Math.min( this.y, anotherRect.y )) * (Math.max( this.x + this.width, anotherRect.x + anotherRect.width ) - Math.min( this.x, anotherRect.x )) - this.getArea());
+    		return (Math.max( this.y + this.height, anotherRect.y + anotherRect.height ) - Math.min( this.y, anotherRect.y )) * (Math.max( this.x + this.width, anotherRect.x + anotherRect.width ) - Math.min( this.x, anotherRect.x ));
     	}
     }
 
@@ -107,6 +107,19 @@ class RTreeRectangle{
 		this.children.push( insertRect );
 		this.growRectangleToFit( insertRect );
 	}
+
+	public getSubtreeData(): Array<RTreeRectangle>{
+		if(this.children.length === 0){
+			return [ this.data ];
+		}
+
+		return _.chain( this.children )
+				.map(function( child: RTreeRectangle ){
+					return child.getSubtreeData();
+				})
+				.flatten()
+				.value() as Array<RTreeRectangle>;
+	}
 }
 
 class RTree{
@@ -116,38 +129,29 @@ class RTree{
 	}
 
 	private _recursiveSeach( searchRect: RTreeRectangle, node: RTreeRectangle ): Array<RTreeRectangle>{
-		if( !node.isLeafNode() ){
-			var containedNode = _.find( node.children, function(node: RTreeRectangle): boolean {
-				return node.contains( searchRect );
-			});
-			if( _.isUndefined( containedNode ) ){
-				return _.chain( node.children )
-						.filter(function( child: RTreeRectangle ){
-							return searchRect.overlaps( child );
-						})
-						.map(( iterateNode: RTreeRectangle ) => {
-							return this._recursiveSeach( searchRect, iterateNode );
-						})
-						.flatten()
-						.value() as Array<RTreeRectangle>;
-            }
-            else {
-            	return this._recursiveSeach( searchRect, containedNode );
-            }
+		if( searchRect.contains( node ) || (node.isLeafNode() && searchRect.overlaps( node ))){
+			return node.getSubtreeData();
 		}
-		else if (searchRect.overlaps( node )){
-			return [ node ];
-		} 
+		else if( !node.isLeafNode() ){
+        	return _.chain( node.children )
+					.filter(function( child: RTreeRectangle ){
+						return searchRect.overlaps( child );
+					})
+					.map(( iterateNode: RTreeRectangle ) => {
+						return this._recursiveSeach( searchRect, iterateNode );
+					})
+					.flatten()
+					.value() as Array<RTreeRectangle>;
+		}
 		else {
+			console.log( "* never entered" );
 			return [];
 		}
 	}
 
 	public search( searchBoundary: DataEntry ): Array<any>{
 		var searchRect = new RTreeRectangle( searchBoundary.x, searchBoundary.y, searchBoundary.width, searchBoundary.height, null );
-		return _.map( this._recursiveSeach( searchRect, this.root ), function( resultRect: RTreeRectangle){
-			return resultRect.data;
-		})
+		return this._recursiveSeach( searchRect, this.root );
 	}
 
 	public insert( dataPoint: DataEntry ): void{
@@ -194,7 +198,7 @@ class RTree{
 			
 			for( var y=0; y<this.maxNodes; y++){
 				if( listOfRectangles.length > 0 ){
-					parent.insertChildRectangle( listOfRectangles.splice(0,1)[0] );
+					parent.insertChildRectangle( listOfRectangles.pop() );
 				} else {
 					break;
 				}
@@ -202,6 +206,8 @@ class RTree{
 
 			nodeLevel.push( parent );
 		}
+
+		nodeLevel.reverse();
 
 		if( level == this.maxDepth - 1 ){
 			// We have reached the max depth. The only option is to let the root node keep all these as child nodes

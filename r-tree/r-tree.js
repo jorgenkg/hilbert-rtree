@@ -1,4 +1,4 @@
-/// <reference path="../libs/lodash.d.ts" />
+/// <reference path="../type-definitions/lodash.d.ts" />
 /// <reference path="HilbertCurves.ts" />
 var RTreeRectangle = (function () {
     function RTreeRectangle(x, y, width, height, data) {
@@ -34,7 +34,7 @@ var RTreeRectangle = (function () {
             return anotherRect.height * anotherRect.width;
         }
         else {
-            return ((Math.max(this.y + this.height, anotherRect.y + anotherRect.height) - Math.min(this.y, anotherRect.y)) * (Math.max(this.x + this.width, anotherRect.x + anotherRect.width) - Math.min(this.x, anotherRect.x)) - this.getArea());
+            return (Math.max(this.y + this.height, anotherRect.y + anotherRect.height) - Math.min(this.y, anotherRect.y)) * (Math.max(this.x + this.width, anotherRect.x + anotherRect.width) - Math.min(this.x, anotherRect.x));
         }
     };
     RTreeRectangle.prototype.getArea = function () {
@@ -80,6 +80,17 @@ var RTreeRectangle = (function () {
         this.children.push(insertRect);
         this.growRectangleToFit(insertRect);
     };
+    RTreeRectangle.prototype.getSubtreeData = function () {
+        if (this.children.length === 0) {
+            return [this.data];
+        }
+        return _.chain(this.children)
+            .map(function (child) {
+            return child.getSubtreeData();
+        })
+            .flatten()
+            .value();
+    };
     return RTreeRectangle;
 })();
 var RTree = (function () {
@@ -90,37 +101,28 @@ var RTree = (function () {
     }
     RTree.prototype._recursiveSeach = function (searchRect, node) {
         var _this = this;
-        if (!node.isLeafNode()) {
-            var containedNode = _.find(node.children, function (node) {
-                return node.contains(searchRect);
-            });
-            if (_.isUndefined(containedNode)) {
-                return _.chain(node.children)
-                    .filter(function (child) {
-                    return searchRect.overlaps(child);
-                })
-                    .map(function (iterateNode) {
-                    return _this._recursiveSeach(searchRect, iterateNode);
-                })
-                    .flatten()
-                    .value();
-            }
-            else {
-                return this._recursiveSeach(searchRect, containedNode);
-            }
+        if (searchRect.contains(node) || (node.isLeafNode() && searchRect.overlaps(node))) {
+            return node.getSubtreeData();
         }
-        else if (searchRect.overlaps(node)) {
-            return [node];
+        else if (!node.isLeafNode()) {
+            return _.chain(node.children)
+                .filter(function (child) {
+                return searchRect.overlaps(child);
+            })
+                .map(function (iterateNode) {
+                return _this._recursiveSeach(searchRect, iterateNode);
+            })
+                .flatten()
+                .value();
         }
         else {
+            console.log("* never entered");
             return [];
         }
     };
     RTree.prototype.search = function (searchBoundary) {
         var searchRect = new RTreeRectangle(searchBoundary.x, searchBoundary.y, searchBoundary.width, searchBoundary.height, null);
-        return _.map(this._recursiveSeach(searchRect, this.root), function (resultRect) {
-            return resultRect.data;
-        });
+        return this._recursiveSeach(searchRect, this.root);
     };
     RTree.prototype.insert = function (dataPoint) {
         var insertRect = new RTreeRectangle(dataPoint.x, dataPoint.y, dataPoint.width, dataPoint.height, dataPoint.data);
@@ -157,7 +159,7 @@ var RTree = (function () {
             var parent = new RTreeRectangle(Infinity, Infinity, 0, 0, null);
             for (var y = 0; y < this.maxNodes; y++) {
                 if (listOfRectangles.length > 0) {
-                    parent.insertChildRectangle(listOfRectangles.splice(0, 1)[0]);
+                    parent.insertChildRectangle(listOfRectangles.pop());
                 }
                 else {
                     break;
@@ -165,6 +167,7 @@ var RTree = (function () {
             }
             nodeLevel.push(parent);
         }
+        nodeLevel.reverse();
         if (level == this.maxDepth - 1) {
             // We have reached the max depth. The only option is to let the root node keep all these as child nodes
             var rootNode = new RTreeRectangle(Infinity, Infinity, 0, 0, null);
