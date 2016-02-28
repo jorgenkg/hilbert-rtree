@@ -2,77 +2,40 @@
 <html>
 <head>
 	<title></title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+	<style type="text/css">
+		html, body, .container-fluid, .row, .row>div {
+  			height: 100%;
+		}
+	</style>
 </head>
 <body>
-<script type="text/javascript" src="node_modules/lodash/lodash.min.js"></script>
-<script type="text/javascript" src="src/HilbertCurves.js"></script>
-<script type="text/javascript" src="src/r-tree.js"></script>
-<script type="text/javascript">
-var canv = document.createElement("canvas");
-canv.width = window.innerWidth;
-canv.height = 600;
-document.body.appendChild(canv);
-var ctx = canv.getContext("2d");
-
-var drawRect = function( rect, level ) {
-	if( rect.children.length == 0 ){
-		ctx.strokeStyle="#FF0000";
-		ctx.setLineDash([3,3]);
-		ctx.strokeRect( rect.x, canv.height-rect.y, rect.width, -rect.height);
-
-		ctx.setLineDash([]);
-		ctx.fillStyle="#FF0000";
-		ctx.font = "20px serif";
-			ctx.fillText(rect.data, rect.x + rect.width/2, canv.height-rect.y-rect.height/2);
-	}
-	else if( rect.children.length > 0 ) {
-		ctx.strokeStyle="#000000";
-		ctx.setLineDash([15,15]);
-		ctx.strokeRect( rect.x, canv.height-rect.y, rect.width, -rect.height);
-		
-		ctx.setLineDash([]);
-		ctx.font = "20px serif";
-		ctx.fillStyle="#000000";
-			ctx.fillText(level.toString(), rect.x + rect.width -20, canv.height-rect.y-rect.height+20);
-
-		_.forEach( rect.children, function( r ) {
-			drawRect( r, level + 1 );
-		});
-	}
-}
-
-var tree = new RTree( 3, 7 );
-var maxX = (canv.width - 100);
-var maxY = (canv.height - 100);
-var minWidth = 50;
-var minHeight = 50;
-var maxWidth = 100;
-var maxHeight = 100;
-var nodes = _.map( _.range(10), function( i ){
-	var data = {};
-	data.x = Math.floor(Math.random() * (maxX-minWidth));
-	data.y = Math.floor(Math.random() * (maxY-minHeight));
-
-	data.width = Math.min(maxWidth, Math.floor(Math.random() * (maxX - data.x)) + minWidth);
-	data.height = Math.min(maxHeight, Math.floor(Math.random() * (maxY - data.y	)) + minHeight);
-	data.data = i;
-	return data;
-});
-
-tree.batchInsert( nodes );
-drawRect( tree.root, 1 );
-
-// for( var i=0; i<nodes.length; i++){
-// 	setTimeout(function(i){
-// 		tree.insert( nodes[i] );
-// 		ctx.clearRect(0,0,canv.width,canv.height);
-// 		drawRect( tree.root, 1 );
-// 	}, 300*i, i );
-// }
-
-console.log( tree );
-drawRect( new RTreeRectangle(0,0,300,300,null), 1 );
-console.log(tree.search( {x: 0, y: 0, width: 300, height: 300} ));
-</script>
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-sm-9">
+				<canvas id="canvas" width="700" height="400"></canvas>
+			</div>
+			<div class="col-sm-3">
+				<h2>Settings</h2>
+				<button class="btn btn-default btn-block btn-sm" data-bind="toggle: batchConstruct, click: function(){batchConstruct() && intermediateRender(false)}">Batch construct</button>
+				<button class="btn btn-default btn-block btn-sm" data-bind="toggle: intermediateRender, click: function(){intermediateRender() && batchConstruct(false)}">Render building</button>
+				<h2>Controls</h2>
+				<button type="button" class="btn btn-primary btn-block" data-bind="click: function(){createNewTree(); searchResults.removeAll()}">Generate Tree</button>
+				<button type="button" class="btn btn-primary btn-block" data-bind="click: queryTree">Query Tree</button>
+				<h2>Results</h2>
+				<small data-bind="visible: searchResults().length > 0">The search query intersects with:</small>
+				<ul class="list-group" data-bind="foreach: searchResults">
+					<li class="list-group-item" data-bind="text: $data"></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.1/jquery.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.0/knockout-min.js"></script>
+	<script type="text/javascript" src="https://cdn.jsdelivr.net/lodash/4.5.0/lodash.min.js"></script>
+	<script type="text/javascript" src="libs/knockstrap.min.js"></script>
+	<script type="text/javascript" src="r-tree/HilbertCurves.js"></script>
+	<script type="text/javascript" src="r-tree/r-tree.js"></script>
+	<script type="text/javascript" src="static/js/main.js"></script>
 </body>
 </html>
