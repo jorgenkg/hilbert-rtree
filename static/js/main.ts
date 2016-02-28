@@ -1,7 +1,7 @@
-/// <reference path="../../libs/knockout.d.ts" />
+/// <reference path="../../type-definitions/knockout.d.ts" />
 /// <reference path="../../type-definitions/jquery.d.ts" />
 
-function recursiveDrawRectangles( canv: HTMLCanvasElement, rect: RTreeRectangle, level: number, color = undefined ): void {
+function recursiveDrawRectangles( canv: HTMLCanvasElement, rect: RTreeRectangle, level: number, color: any = undefined ): void {
 	var ctx = canv.getContext("2d");
 
 	if( rect.children.length == 0 ){
@@ -25,12 +25,12 @@ function recursiveDrawRectangles( canv: HTMLCanvasElement, rect: RTreeRectangle,
 			ctx.fillText(level.toString(), rect.x + rect.width -20, canv.height-rect.y-rect.height+20);
 
 		_.forEach( rect.children, function( r ) {
-			recursiveDrawRectangles( canvas, r, level + 1 );
+			recursiveDrawRectangles( canv, r, level + 1 );
 		});
 	}
 }
 
-function createTree( maxNodes: number, maxDepth: number, numberOfNodes: number, canvas: HTMLCanvasElement, batchCreate = BATCH_CREATE, renderConstruction = true ){
+function createTree( maxNodes: number, maxDepth: number, numberOfNodes: number, canvas: HTMLCanvasElement, batchCreate: boolean, renderConstruction: boolean ){
 	var tree = new RTree( maxNodes, maxDepth );
 	var maxX = (canvas.width - 100);
 	var maxY = (canvas.height - 100);

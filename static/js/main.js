@@ -1,4 +1,4 @@
-/// <reference path="../../libs/knockout.d.ts" />
+/// <reference path="../../type-definitions/knockout.d.ts" />
 /// <reference path="../../type-definitions/jquery.d.ts" />
 function recursiveDrawRectangles(canv, rect, level, color) {
     if (color === void 0) { color = undefined; }
@@ -21,13 +21,11 @@ function recursiveDrawRectangles(canv, rect, level, color) {
         ctx.fillStyle = "#000000";
         ctx.fillText(level.toString(), rect.x + rect.width - 20, canv.height - rect.y - rect.height + 20);
         _.forEach(rect.children, function (r) {
-            recursiveDrawRectangles(canvas, r, level + 1);
+            recursiveDrawRectangles(canv, r, level + 1);
         });
     }
 }
 function createTree(maxNodes, maxDepth, numberOfNodes, canvas, batchCreate, renderConstruction) {
-    if (batchCreate === void 0) { batchCreate = BATCH_CREATE; }
-    if (renderConstruction === void 0) { renderConstruction = true; }
     var tree = new RTree(maxNodes, maxDepth);
     var maxX = (canvas.width - 100);
     var maxY = (canvas.height - 100);
