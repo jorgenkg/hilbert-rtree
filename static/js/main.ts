@@ -30,12 +30,12 @@ function recursiveDrawRectangles( canv: HTMLCanvasElement, rect: RTreeRectangle,
 	}
 }
 
-function createTree( maxNodes: number, maxDepth: number, numberOfNodes: number, canvas: HTMLCanvasElement, batchCreate: boolean, renderConstruction: boolean ){
-	var tree = new RTree( maxNodes, maxDepth );
+function createTree( maxNodes: number, numberOfNodes: number, canvas: HTMLCanvasElement, batchCreate: boolean, renderConstruction: boolean ){
+	var tree = new RTree( maxNodes );
 	var maxX = (canvas.width - 100);
 	var maxY = (canvas.height - 100);
-	var minWidth = 50;
-	var minHeight = 50;
+	var minWidth = 20;
+	var minHeight = 20;
 	var maxWidth = minWidth + 10;
 	var maxHeight = minHeight + 10;
 	var nodes = _.map( _.range(numberOfNodes), function( i: number ){
@@ -61,7 +61,7 @@ function createTree( maxNodes: number, maxDepth: number, numberOfNodes: number, 
 					tree.insert( nodes[i] );
 					ctx.clearRect(0,0,canvas.width,canvas.height);
 					recursiveDrawRectangles( canvas, tree.root, 1 );
-				}, 300*i, i );
+				}, 100*i, i );
 			}
 		}
 		else {
@@ -117,8 +117,8 @@ $(document).ready(function(){
 	    intermediateRender: ko.observable( false ),
 
 	    createNewTree: function(){
-	    	var maxNodes: number = 2, maxDepth: number = 5, numberOfNodes: number = 10;
-	    	tree = createTree( maxNodes, maxDepth, numberOfNodes, canvas, myViewModel.batchConstruct(), myViewModel.intermediateRender() );
+	    	var maxNodes: number = 4, numberOfNodes: number = 20;
+	    	tree = createTree( maxNodes, numberOfNodes, canvas, myViewModel.batchConstruct(), myViewModel.intermediateRender() );
 	    },
 	    queryTree: function(){
 	    	searchTree( tree, canvas.width/4, canvas.height/4, canvas.width/2, canvas.height/2, canvas, myViewModel );

@@ -1,5 +1,3 @@
-/// <reference path="../type-definitions/lodash.d.ts" />
-/// <reference path="HilbertCurves.ts" />
 var RTreeRectangle = (function () {
     function RTreeRectangle(x, y, width, height, data) {
         this.x = x;
@@ -9,6 +7,9 @@ var RTreeRectangle = (function () {
         this.data = data;
         this.children = [];
     }
+    RTreeRectangle.generateEmptyNode = function () {
+        return new RTreeRectangle(Infinity, Infinity, 0, 0, null);
+    };
     RTreeRectangle.prototype.overlaps = function (anotherRect) {
         return this.x < anotherRect.x + anotherRect.width && this.x + this.width > anotherRect.x && this.y + this.height > anotherRect.y && anotherRect.y + anotherRect.height > this.y;
     };
@@ -29,42 +30,52 @@ var RTreeRectangle = (function () {
             this.y = Math.min(this.y, anotherRect.y);
         }
     };
+    RTreeRectangle.prototype.recalculateBoundingValues = function () {
+        var _this = this;
+        this.height = 0;
+        this.width = 0;
+        this.x = Infinity;
+        this.y = Infinity;
+        _.each(this.children, function (child) {
+            _this.growRectangleToFit(child);
+        });
+    };
     RTreeRectangle.prototype.areaIfGrownBy = function (anotherRect) {
         if (this.x === Infinity) {
             return anotherRect.height * anotherRect.width;
         }
         else {
-            return (Math.max(this.y + this.height, anotherRect.y + anotherRect.height) - Math.min(this.y, anotherRect.y)) * (Math.max(this.x + this.width, anotherRect.x + anotherRect.width) - Math.min(this.x, anotherRect.x));
+            return (Math.max(this.y + this.height, anotherRect.y + anotherRect.height) - Math.min(this.y, anotherRect.y)) * (Math.max(this.x + this.width, anotherRect.x + anotherRect.width) - Math.min(this.x, anotherRect.x)) - this.getArea();
         }
     };
     RTreeRectangle.prototype.getArea = function () {
         return this.height * this.width;
     };
     RTreeRectangle.prototype.splitIntoSiblings = function () {
-        var sibling1 = new RTreeRectangle(Infinity, Infinity, 0, 0, null);
-        var sibling2 = new RTreeRectangle(Infinity, Infinity, 0, 0, null);
+        var pivot = Math.floor(this.children.length / 2);
+        var sibling1 = RTreeRectangle.generateEmptyNode();
+        var sibling2 = RTreeRectangle.generateEmptyNode();
         var maxCoordinate = _.chain(this.children)
             .map(function (rect) {
-            return Math.max(rect.x + rect.width * 0.5, rect.y + rect.height * 0.5);
+            return Math.ceil(Math.max(rect.x + rect.width * 0.5, rect.y + rect.height * 0.5));
         })
             .thru(_.max)
             .value();
         var sorted = _.sortBy(this.children, function (rect) {
-            return HilbertCurves.toHilbertCoordinates(maxCoordinate, rect.x + rect.width * 0.5, rect.y + rect.height * 0.5);
+            return HilbertCurves.toHilbertCoordinates(maxCoordinate, Math.ceil(rect.x + rect.width * 0.5), Math.ceil(rect.y + rect.height * 0.5));
         });
-        var center = Math.floor(this.children.length / 2);
-        this.children.length = 0;
-        var i = 0;
-        while (sorted.length > 0) {
-            i += 1;
-            var child = sorted.pop();
-            if (i <= center) {
-                sibling1.insertChildRectangle(child);
+        _.each(sorted, function (rect, i) {
+            if (i <= pivot) {
+                sibling1.insertChildRectangle(sorted[i]);
             }
             else {
-                sibling2.insertChildRectangle(child);
+                sibling2.insertChildRectangle(sorted[i]);
             }
-        }
+        });
+        this.x = this.y = Infinity;
+        this.width = this.height = 0;
+        this.children.length = 0;
+        sorted.length = 0;
         return [sibling1, sibling2];
     };
     RTreeRectangle.prototype.numberOfChildren = function () {
@@ -77,48 +88,45 @@ var RTreeRectangle = (function () {
         return this.isLeafNode() || this.children[0].isLeafNode();
     };
     RTreeRectangle.prototype.insertChildRectangle = function (insertRect) {
+        insertRect.parent = this;
         this.children.push(insertRect);
         this.growRectangleToFit(insertRect);
+    };
+    RTreeRectangle.prototype.removeChildRectangle = function (removeRect) {
+        this.children.splice(_.indexOf(this.children, removeRect), 1);
+        this.recalculateBoundingValues();
     };
     RTreeRectangle.prototype.getSubtreeData = function () {
         if (this.children.length === 0) {
             return [this.data];
         }
         return _.chain(this.children)
-            .map(function (child) {
-            return child.getSubtreeData();
-        })
-            .flatten()
+            .map(_.method("getSubtreeData"))
+            .thru(fastFlattenArray)
             .value();
     };
     return RTreeRectangle;
-})();
+}());
 var RTree = (function () {
-    function RTree(maxNodes, maxDepth) {
+    function RTree(maxNodes) {
         this.maxNodes = maxNodes;
-        this.maxDepth = maxDepth;
-        this.root = new RTreeRectangle(Infinity, Infinity, 0, 0, null);
+        this.root = RTreeRectangle.generateEmptyNode();
     }
     RTree.prototype._recursiveSeach = function (searchRect, node) {
         var _this = this;
-        if (searchRect.contains(node) || (node.isLeafNode() && searchRect.overlaps(node))) {
+        if (searchRect.contains(node) || node.isLeafNode()) {
             return node.getSubtreeData();
         }
         else if (!node.isLeafNode()) {
             return _.chain(node.children)
-                .filter(function (child) {
-                return searchRect.overlaps(child);
-            })
+                .filter(_.method("overlaps", searchRect))
                 .map(function (iterateNode) {
                 return _this._recursiveSeach(searchRect, iterateNode);
             })
                 .flatten()
                 .value();
         }
-        else {
-            console.log("* never entered");
-            return [];
-        }
+        throw "I'm pretty sure we shouldn't reach this point.";
     };
     RTree.prototype.search = function (searchBoundary) {
         var searchRect = new RTreeRectangle(searchBoundary.x, searchBoundary.y, searchBoundary.width, searchBoundary.height, null);
@@ -127,61 +135,31 @@ var RTree = (function () {
     RTree.prototype.insert = function (dataPoint) {
         var insertRect = new RTreeRectangle(dataPoint.x, dataPoint.y, dataPoint.width, dataPoint.height, dataPoint.data);
         var currentNode = this.root;
-        var path = [currentNode];
-        var level = 1;
-        while (!currentNode.hasLeafNodes() && level < this.maxDepth) {
-            level += 1;
+        while (!currentNode.hasLeafNodes()) {
             currentNode.growRectangleToFit(insertRect);
-            var validSubNodes = _.filter(currentNode.children, function (node) {
-                return node.overlaps(insertRect);
-            });
-            if (validSubNodes.length > 0) {
-                currentNode = validSubNodes.length > 1 ? _.minBy(validSubNodes, function (node) {
-                    return node.areaIfGrownBy(insertRect);
-                }) : validSubNodes[0];
-                path.push(currentNode);
-            }
-            else {
-                currentNode = _.minBy(currentNode.children, function (node) {
-                    return node.areaIfGrownBy(insertRect);
-                });
-                path.push(currentNode);
-            }
+            currentNode = _.minBy(currentNode.children, _.method("areaIfGrownBy", insertRect));
         }
         currentNode.insertChildRectangle(insertRect);
-        this.balanceTreePath(path);
+        this.balanceTreePath(insertRect);
     };
     RTree.prototype._recursiveTreeLayer = function (listOfRectangles, level) {
         if (level === void 0) { level = 1; }
         var numberOfParents = Math.ceil(listOfRectangles.length / this.maxNodes);
         var nodeLevel = [];
+        var childCount = 0;
+        var parent;
         for (var i = 0; i < numberOfParents; i++) {
-            var parent = new RTreeRectangle(Infinity, Infinity, 0, 0, null);
-            for (var y = 0; y < this.maxNodes; y++) {
-                if (listOfRectangles.length > 0) {
-                    parent.insertChildRectangle(listOfRectangles.pop());
-                }
-                else {
-                    break;
-                }
+            parent = RTreeRectangle.generateEmptyNode();
+            childCount = Math.min(this.maxNodes, listOfRectangles.length);
+            for (var y = 0; y < childCount; y++) {
+                parent.insertChildRectangle(listOfRectangles.pop());
             }
             nodeLevel.push(parent);
         }
-        nodeLevel.reverse();
-        if (level == this.maxDepth - 1) {
-            // We have reached the max depth. The only option is to let the root node keep all these as child nodes
-            var rootNode = new RTreeRectangle(Infinity, Infinity, 0, 0, null);
-            _.forEach(nodeLevel, function (insertRect) {
-                rootNode.insertChildRectangle(insertRect);
-            });
-            return [rootNode];
-        }
-        else if (numberOfParents > 1) {
-            // We have not yet reached the construction of a root node
+        if (numberOfParents > 1) {
             return this._recursiveTreeLayer(nodeLevel, level + 1);
         }
         else {
-            // The root node has been initialized
             return nodeLevel;
         }
     };
@@ -191,37 +169,33 @@ var RTree = (function () {
         });
         var maxCoordinate = _.chain(listOfRectangles)
             .map(function (rect) {
-            return Math.max(rect.x + rect.width * 0.5, rect.y + rect.height * 0.5);
+            return Math.ceil(Math.max(rect.x + rect.width * 0.5, rect.y + rect.height * 0.5));
         })
             .thru(_.max)
             .value();
         var sorted = _.sortBy(listOfRectangles, function (rect) {
-            return HilbertCurves.toHilbertCoordinates(maxCoordinate, rect.x + rect.width * 0.5, rect.y + rect.height * 0.5);
+            return HilbertCurves.toHilbertCoordinates(maxCoordinate, Math.ceil(rect.x + rect.width * 0.5), Math.ceil(rect.y + rect.height * 0.5));
         });
         listOfRectangles.length = 0;
         this.root = this._recursiveTreeLayer(sorted)[0];
     };
-    RTree.prototype.balanceTreePath = function (pathOfRectangles) {
-        while (pathOfRectangles.length > 0) {
-            var currentNode = pathOfRectangles.pop();
-            if (currentNode.numberOfChildren() <= this.maxNodes) {
-                return; // the tree is valid
-            }
-            else if (currentNode != this.root) {
-                var parentNode = pathOfRectangles[pathOfRectangles.length - 1];
-                var replacementSiblings = currentNode.splitIntoSiblings();
-                parentNode.children.splice(_.indexOf(parentNode.children, currentNode), 1);
-                _.forEach(replacementSiblings, function (insertRect) {
-                    parentNode.insertChildRectangle(insertRect);
+    RTree.prototype.balanceTreePath = function (leafRectangle) {
+        var currentNode = leafRectangle;
+        while (!_.isUndefined(currentNode.parent) && currentNode.parent.numberOfChildren() > this.maxNodes) {
+            var currentNode = currentNode.parent;
+            if (currentNode != this.root) {
+                currentNode.parent.removeChildRectangle(currentNode);
+                _.forEach(currentNode.splitIntoSiblings(), function (insertRect) {
+                    currentNode.parent.insertChildRectangle(insertRect);
                 });
             }
             else if (currentNode == this.root) {
-                var replacementSiblings = currentNode.splitIntoSiblings();
-                _.forEach(replacementSiblings, function (insertRect) {
+                _.forEach(currentNode.splitIntoSiblings(), function (insertRect) {
                     currentNode.insertChildRectangle(insertRect);
                 });
             }
         }
     };
     return RTree;
-})();
+}());
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoici10cmVlLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsici10cmVlLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQVVBO0lBSUMsd0JBQW1CLENBQVMsRUFDTixDQUFTLEVBQ1QsS0FBYSxFQUNiLE1BQWMsRUFDZCxJQUFTO1FBSlosTUFBQyxHQUFELENBQUMsQ0FBUTtRQUNOLE1BQUMsR0FBRCxDQUFDLENBQVE7UUFDVCxVQUFLLEdBQUwsS0FBSyxDQUFRO1FBQ2IsV0FBTSxHQUFOLE1BQU0sQ0FBUTtRQUNkLFNBQUksR0FBSixJQUFJLENBQUs7UUFQeEIsYUFBUSxHQUF5QixFQUFFLENBQUM7SUFReEMsQ0FBQztJQUVhLGdDQUFpQixHQUEvQjtRQUNDLE1BQU0sQ0FBQyxJQUFJLGNBQWMsQ0FBRSxRQUFRLEVBQUUsUUFBUSxFQUFFLENBQUMsRUFBRSxDQUFDLEVBQUUsSUFBSSxDQUFFLENBQUM7SUFDN0QsQ0FBQztJQUVNLGlDQUFRLEdBQWYsVUFBaUIsV0FBMkI7UUFDeEMsTUFBTSxDQUFDLElBQUksQ0FBQyxDQUFDLEdBQUcsV0FBVyxDQUFDLENBQUMsR0FBRyxXQUFXLENBQUMsS0FBSyxJQUFJLElBQUksQ0FBQyxDQUFDLEdBQUcsSUFBSSxDQUFDLEtBQUssR0FBRyxXQUFXLENBQUMsQ0FBQyxJQUFJLElBQUksQ0FBQyxDQUFDLEdBQUcsSUFBSSxDQUFDLE1BQU0sR0FBRyxXQUFXLENBQUMsQ0FBQyxJQUFJLFdBQVcsQ0FBQyxDQUFDLEdBQUcsV0FBVyxDQUFDLE1BQU0sR0FBRyxJQUFJLENBQUMsQ0FBQyxDQUFDO0lBQ3BMLENBQUM7SUFFTSxpQ0FBUSxHQUFmLFVBQWlCLFdBQTJCO1FBQzNDLE1BQU0sQ0FBQyxJQUFJLENBQUMsQ0FBQyxJQUFJLFdBQVcsQ0FBQyxDQUFDLElBQUksSUFBSSxDQUFDLENBQUMsR0FBRyxJQUFJLENBQUMsS0FBSyxJQUFJLFdBQVcsQ0FBQyxDQUFDLEdBQUcsV0FBVyxDQUFDLEtBQUssSUFBSSxJQUFJLENB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

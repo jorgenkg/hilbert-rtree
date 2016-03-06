@@ -1,6 +1,3 @@
-/// <reference path="../type-definitions/lodash.d.ts" />
-/// <reference path="HilbertCurves.ts" />
-
 interface DataEntry{
 	x: number;
 	y: number;
@@ -13,12 +10,17 @@ interface DataEntry{
 
 class RTreeRectangle{
 	public children:Array<RTreeRectangle> = [];
+	public parent: RTreeRectangle;
 
 	constructor(public x: number,
                 public y: number,
                 public width: number,
                 public height: number,
                 public data: any){
+    }
+
+    public static generateEmptyNode(): RTreeRectangle {
+    	return new RTreeRectangle( Infinity, Infinity, 0, 0, null );
     }
 
     public overlaps( anotherRect: RTreeRectangle ): boolean{ 
@@ -44,12 +46,23 @@ class RTreeRectangle{
     	}
     }
 
+    public recalculateBoundingValues(): void{
+    	this.height = 0;
+	    this.width = 0;
+	    this.x = Infinity;
+	    this.y = Infinity;
+    	
+    	_.each( this.children, ( child: RTreeRectangle ) => {
+    		this.growRectangleToFit( child );
+    	});
+    }
+
     public areaIfGrownBy( anotherRect: RTreeRectangle ): number{
     	if( this.x === Infinity ){
     		return anotherRect.height * anotherRect.width;
     	}
     	else{
-    		return (Math.max( this.y + this.height, anotherRect.y + anotherRect.height ) - Math.min( this.y, anotherRect.y )) * (Math.max( this.x + this.width, anotherRect.x + anotherRect.width ) - Math.min( this.x, anotherRect.x ));
+    		return (Math.max( this.y + this.height, anotherRect.y + anotherRect.height ) - Math.min( this.y, anotherRect.y )) * (Math.max( this.x + this.width, anotherRect.x + anotherRect.width ) - Math.min( this.x, anotherRect.x )) - this.getArea();
     	}
     }
 
@@ -58,35 +71,36 @@ class RTreeRectangle{
     }
 
     public splitIntoSiblings(): Array<RTreeRectangle> {
-    	var sibling1 = new RTreeRectangle( Infinity, Infinity, 0, 0, null );
-    	var sibling2 = new RTreeRectangle( Infinity, Infinity, 0, 0, null );
+    	var pivot    = Math.floor(this.children.length / 2);
+    	var sibling1 = RTreeRectangle.generateEmptyNode();
+    	var sibling2 = RTreeRectangle.generateEmptyNode();
 
     	var maxCoordinate = _.chain( this.children )
 							.map(function( rect: RTreeRectangle ){
-								return Math.max( rect.x + rect.width*0.5, rect.y + rect.height*0.5 );
+								return Math.ceil(Math.max( rect.x + rect.width*0.5, rect.y + rect.height*0.5 ));
 							})
 							.thru( _.max )
 							.value();
 		
 		var sorted = _.sortBy( this.children, function( rect: RTreeRectangle){
-			return HilbertCurves.toHilbertCoordinates( maxCoordinate, rect.x + rect.width*0.5, rect.y + rect.height*0.5 );
+			return HilbertCurves.toHilbertCoordinates( maxCoordinate, Math.ceil(rect.x + rect.width*0.5), Math.ceil(rect.y + rect.height*0.5) );
 		});
 
-		var center  = Math.floor(this.children.length / 2);
-
-    	this.children.length = 0;
-
-    	var i = 0;
-    	while( sorted.length > 0 ){
-    		i += 1;
-    		var child: RTreeRectangle = sorted.pop();
-    		if( i <= center ){
-    			sibling1.insertChildRectangle( child );
+    	_.each( sorted, function ( rect: RTreeRectangle, i: number ){
+    		if( i <= pivot ){
+    			sibling1.insertChildRectangle( sorted[i] );
     		}
     		else{
-    			sibling2.insertChildRectangle( child );	
+    			sibling2.insertChildRectangle( sorted[i] );	
     		}
-    	}
+    	});
+
+    	// Reset this rectangle's bounds since we have removed the "space spanning" children.
+    	this.x = this.y = Infinity;
+    	this.width = this.height = 0;
+
+    	this.children.length = 0;
+    	sorted.length = 0;
 
     	return [sibling1, sibling2];
     }
@@ -104,8 +118,14 @@ class RTreeRectangle{
 	}
 
 	public insertChildRectangle( insertRect: RTreeRectangle ): void{
+		insertRect.parent = this;
 		this.children.push( insertRect );
 		this.growRectangleToFit( insertRect );
+	}
+
+	public removeChildRectangle( removeRect: RTreeRectangle ): void{
+		this.children.splice(  _.indexOf( this.children, removeRect ), 1 );
+		this.recalculateBoundingValues();
 	}
 
 	public getSubtreeData(): Array<RTreeRectangle>{
@@ -114,39 +134,37 @@ class RTreeRectangle{
 		}
 
 		return _.chain( this.children )
-				.map(function( child: RTreeRectangle ){
-					return child.getSubtreeData();
-				})
-				.flatten()
+				.map( _.method("getSubtreeData") )
+				.thru( fastFlattenArray )
 				.value() as Array<RTreeRectangle>;
 	}
 }
 
 class RTree{
-	public root: RTreeRectangle = new RTreeRectangle( Infinity, Infinity, 0, 0, null );
+	public root: RTreeRectangle = RTreeRectangle.generateEmptyNode();
 
-	constructor( private maxNodes: number, private maxDepth: number ){
+	constructor( private maxNodes: number ){
 	}
 
 	private _recursiveSeach( searchRect: RTreeRectangle, node: RTreeRectangle ): Array<RTreeRectangle>{
-		if( searchRect.contains( node ) || (node.isLeafNode() && searchRect.overlaps( node ))){
+		if( searchRect.contains( node ) || node.isLeafNode() ){
+			// If the query rectangles encapsulates this node, any data points stored within the node
+			// rectangle should be returned by the search. This is also true if the node is a leaf. (We
+			// tested that the query overlapped before we called the function on this child)
 			return node.getSubtreeData();
 		}
 		else if( !node.isLeafNode() ){
+			// Recursively search the rectangles intersected by the search query rectangle.
         	return _.chain( node.children )
-					.filter(function( child: RTreeRectangle ){
-						return searchRect.overlaps( child );
-					})
+					.filter( _.method("overlaps", searchRect ))
 					.map(( iterateNode: RTreeRectangle ) => {
 						return this._recursiveSeach( searchRect, iterateNode );
 					})
 					.flatten()
 					.value() as Array<RTreeRectangle>;
 		}
-		else {
-			console.log( "* never entered" );
-			return [];
-		}
+		
+		throw "I'm pretty sure we shouldn't reach this point.";
 	}
 
 	public search( searchBoundary: DataEntry ): Array<any>{
@@ -158,67 +176,41 @@ class RTree{
 		var insertRect = new RTreeRectangle( dataPoint.x, dataPoint.y, dataPoint.width, dataPoint.height, dataPoint.data );
 
 		var currentNode: RTreeRectangle = this.root;
-		var path: Array<RTreeRectangle> = [ currentNode ];
 
-		var level = 1;
-		while( !currentNode.hasLeafNodes() && level < this.maxDepth ){
-			level += 1;
+		while( !currentNode.hasLeafNodes() ){
+			// Grow the current node's bounding rectangle
 			currentNode.growRectangleToFit( insertRect );
 
-			var validSubNodes = _.filter( currentNode.children, function(node: RTreeRectangle): boolean {
-				return node.overlaps( insertRect );
-			});
-
-			if( validSubNodes.length > 0 ){
-				currentNode = validSubNodes.length > 1 ? _.minBy(validSubNodes, function (node) {
-	            	return node.areaIfGrownBy(insertRect);
-	            }) : validSubNodes[0];
-
-                path.push(currentNode);
-            }
-            else {
-            	currentNode = _.minBy(currentNode.children, function (node) {
-	            	return node.areaIfGrownBy(insertRect);
-	            });
-
-                path.push(currentNode);
-            }
+			// Decide the subsequent node to "travel" to
+			currentNode = <RTreeRectangle> _.minBy(currentNode.children, _.method("areaIfGrownBy", insertRect ));
 		}
 
+		// We have discovered the correct node to insert this leaf
 		currentNode.insertChildRectangle( insertRect );
-		this.balanceTreePath( path );
+
+		// Execute the balance routine
+		this.balanceTreePath( insertRect );
 	}
 
 	private _recursiveTreeLayer( listOfRectangles: Array<RTreeRectangle>, level = 1 ): Array<RTreeRectangle> {
 		var numberOfParents =  Math.ceil(listOfRectangles.length / this.maxNodes);
 		var nodeLevel: Array<RTreeRectangle> = [];
-		
+		var childCount = 0;
+		var parent: RTreeRectangle;
+
 		for( var i=0; i<numberOfParents; i++){
-			var parent = new RTreeRectangle(Infinity, Infinity, 0, 0, null);
+			parent = RTreeRectangle.generateEmptyNode();
+			childCount = Math.min( this.maxNodes, listOfRectangles.length );
 			
-			for( var y=0; y<this.maxNodes; y++){
-				if( listOfRectangles.length > 0 ){
-					parent.insertChildRectangle( listOfRectangles.pop() );
-				} else {
-					break;
-				}
+			for( var y=0; y< childCount; y++){
+				parent.insertChildRectangle( listOfRectangles.pop() );
 			}
 
 			nodeLevel.push( parent );
 		}
+		
 
-		nodeLevel.reverse();
-
-		if( level == this.maxDepth - 1 ){
-			// We have reached the max depth. The only option is to let the root node keep all these as child nodes
-			var rootNode = new RTreeRectangle( Infinity, Infinity, 0, 0, null );
-			_.forEach( nodeLevel, function( insertRect: RTreeRectangle ){
-				rootNode.insertChildRectangle( insertRect );
-			});
-
-			return [ rootNode ];
-		}
-		else if( numberOfParents > 1 ){
+		if( numberOfParents > 1 ){
 			// We have not yet reached the construction of a root node
 			return this._recursiveTreeLayer( nodeLevel, level + 1 );
 		}
@@ -235,13 +227,13 @@ class RTree{
 
 		var maxCoordinate = _.chain( listOfRectangles )
 							.map(function( rect: RTreeRectangle ){
-								return Math.max( rect.x + rect.width*0.5, rect.y + rect.height*0.5 );
+								return Math.ceil(Math.max( rect.x + rect.width*0.5, rect.y + rect.height*0.5 ));
 							})
 							.thru( _.max )
 							.value();
 		
 		var sorted = _.sortBy( listOfRectangles, function( rect: RTreeRectangle){
-			return HilbertCurves.toHilbertCoordinates( maxCoordinate, rect.x + rect.width*0.5, rect.y + rect.height*0.5 );
+			return HilbertCurves.toHilbertCoordinates( maxCoordinate, Math.ceil(rect.x + rect.width*0.5), Math.ceil(rect.y + rect.height*0.5) );
 		});
 
 		listOfRectangles.length = 0;
@@ -249,27 +241,26 @@ class RTree{
 		this.root = this._recursiveTreeLayer( sorted )[0];
 	}
 
-	private balanceTreePath( pathOfRectangles: Array<RTreeRectangle> ) {
-		while( pathOfRectangles.length > 0 ){
-			var currentNode = pathOfRectangles.pop();
-			if( currentNode.numberOfChildren() <= this.maxNodes ){
-				return; // the tree is valid
-			}
-			else if( currentNode != this.root ){
-				var parentNode: RTreeRectangle = pathOfRectangles[ pathOfRectangles.length - 1 ];
-				var replacementSiblings: Array<RTreeRectangle> = currentNode.splitIntoSiblings( );
 
-				parentNode.children.splice(  _.indexOf( parentNode.children, currentNode ), 1 );
+	private balanceTreePath( leafRectangle: RTreeRectangle ): void {
+		var currentNode = leafRectangle;
 
-				_.forEach( replacementSiblings, ( insertRect: RTreeRectangle ) => {
-					parentNode.insertChildRectangle( insertRect );
+		while( !_.isUndefined(currentNode.parent) && currentNode.parent.numberOfChildren() > this.maxNodes){
+			// Enter the loop if the current node's parent has too many children.
+
+			var currentNode = currentNode.parent;
+
+			if( currentNode != this.root ){
+				currentNode.parent.removeChildRectangle( currentNode );
+
+				_.forEach( currentNode.splitIntoSiblings(), function( insertRect: RTreeRectangle ) {
+					currentNode.parent.insertChildRectangle( insertRect );
 				});
-
 			} 
 			else if ( currentNode == this.root ){
-				var replacementSiblings: Array<RTreeRectangle> = currentNode.splitIntoSiblings( );
-				
-				_.forEach( replacementSiblings, ( insertRect: RTreeRectangle ) => {
+				// Split the children of the root node (implies adding another tree level), and add these newly
+				// generated children to the root node again.
+				_.forEach( currentNode.splitIntoSiblings(), function( insertRect: RTreeRectangle ) {
 					currentNode.insertChildRectangle( insertRect );
 				});
 			}

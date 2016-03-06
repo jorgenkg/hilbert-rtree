@@ -1,0 +1,19 @@
+{
+  "name": "typescript-javascript-rtree",
+  "version": "0.0.1",
+  "scripts": {
+      "tsc": "tsc",
+      "tsc:w": "tsc -w",
+      "lite": "lite-server",
+      "start": "concurrent \"npm run tsc:w\" \"npm run lite\" "
+    },
+  "license": "MIT",
+  "dependencies": {
+    "lodash": "latest"
+  },
+  "devDependencies": {
+    "concurrently": "^1.0.0",
+    "lite-server": "^2.0.1",
+    "typescript": "^1.7.5"
+  }
+}

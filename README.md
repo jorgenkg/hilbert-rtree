@@ -12,8 +12,7 @@ This is an implementation of a Hilbert Packed  R-Tree. R-Trees are a special dat
 
 ``` javascript
 var maxNodes = 4;   // Maximum number of nodes within a bounding rectangle
-var maxDepth = 7;   // Maximum depth of the R-Tree
-var tree     = new RTree(maxNodes, maxDepth);
+var tree     = new RTree( maxNodes );
 ```
 
 ##### Create some structured data
@@ -62,10 +61,17 @@ console.log( results ); // prints: [ "This can be anything" ]
 
 *  [lodash](https://lodash.com)
 
+## Setting up the dev environment
+
+1. Install NodeJS and NPM
+2. Run `npm install` from the project directory
+3. Run `npm start` to initialize the automatic TypeScript compiling and browser refreshing
+
 ## Kudos
 
 *  The TypeScript definitions published by [DefinitelyTyped](http://definitelytyped.org) has been essential.
+*  The project includes a fast implementation of a deep flattening function written by @willsp
 
 #### Other
 
-The demo uses the [Knockstrap library](http://faulknercs.github.io/Knockstrap/) written by Artem Stepanyuk, as well as jQuery, KnockoutJS and Bootstrap.
+The demo uses the [Knockstrap library](http://faulknercs.github.io/Knockstrap/) written by @faulknercs, as well as jQuery, KnockoutJS and Bootstrap.
