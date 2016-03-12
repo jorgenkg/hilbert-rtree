@@ -1,46 +1,38 @@
 var HilbertCurves;
 (function (HilbertCurves) {
     function toHilbertCoordinates(maxCoordinate, x, y) {
-        var rx, ry, s, hilbertIndex = 0;
-        for (s = Math.floor(maxCoordinate / 2); s > 0; s /= 2) {
-            rx = (x & s) > 0;
-            ry = (y & s) > 0;
-            hilbertIndex += s * s * ((3 * rx) ^ ry);
-            var rotated = rotate(s, x, y, rx, ry);
-            x = rotated[0];
-            y = rotated[1];
+        var r = maxCoordinate;
+        var mask = (1 << r) - 1;
+        var hodd = 0;
+        var heven = x ^ y;
+        var notx = ~x & mask;
+        var noty = ~y & mask;
+        var tmp = notx ^ y;
+        var v0 = 0;
+        var v1 = 0;
+        for (var k = 1; k < r; k++) {
+            v1 = ((v1 & heven) | ((v0 ^ noty) & tmp)) >> 1;
+            v0 = ((v0 & (v1 ^ notx)) | (~v0 & (v1 ^ noty))) >> 1;
         }
-        return hilbertIndex;
+        hodd = (~v0 & (v1 ^ x)) | (v0 & (v1 ^ noty));
+        return hilbertInterleaveBits(hodd, heven);
     }
     HilbertCurves.toHilbertCoordinates = toHilbertCoordinates;
-    function fromHilbertCoordinates(maxCoordinate, hilbertIndex) {
-        var x, y, rx, ry, s, t = hilbertIndex;
-        x = y = 0;
-        for (s = 1; s < maxCoordinate; s *= 2) {
-            rx = 1 & (t / 2);
-            ry = 1 & (t ^ rx);
-            var rotated = rotate(s, x, y, rx, ry);
-            x = rotated[0];
-            y = rotated[1];
-            x += s * rx;
-            y += s * ry;
-            t /= 4;
+    function hilbertInterleaveBits(odd, even) {
+        var val = 0;
+        var max = Math.max(odd, even);
+        var n = 0;
+        while (max > 0) {
+            n++;
+            max >>= 1;
         }
-        return [x, y];
-    }
-    HilbertCurves.fromHilbertCoordinates = fromHilbertCoordinates;
-    function rotate(maxCoordinate, x, y, rx, ry) {
-        var t;
-        if (ry == 0) {
-            if (rx == 1) {
-                x = maxCoordinate - 1 - x;
-                y = maxCoordinate - 1 - y;
-            }
-            //Swap x and y
-            t = x;
-            x = y;
-            y = t;
+        for (var i = 0; i < n; i++) {
+            var mask = 1 << i;
+            var a = (even & mask) > 0 ? (1 << (2 * i)) : 0;
+            var b = (odd & mask) > 0 ? (1 << (2 * i + 1)) : 0;
+            val += a + b;
         }
-        return [x, y];
+        return val;
     }
 })(HilbertCurves || (HilbertCurves = {}));
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiSGlsYmVydEN1cnZlcy5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIkhpbGJlcnRDdXJ2ZXMudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEsSUFBTyxhQUFhLENBd0NuQjtBQXhDRCxXQUFPLGFBQWEsRUFBQSxDQUFDO0lBQ3BCLDhCQUFzQyxhQUFxQixFQUFFLENBQVMsRUFBRSxDQUFTO1FBQ2hGLElBQUksQ0FBQyxHQUFHLGFBQWEsQ0FBQztRQUN0QixJQUFJLElBQUksR0FBRyxDQUFDLENBQUMsSUFBSSxDQUFDLENBQUMsR0FBRyxDQUFDLENBQUM7UUFDeEIsSUFBSSxJQUFJLEdBQUcsQ0FBQyxDQUFDO1FBQ2IsSUFBSSxLQUFLLEdBQUcsQ0FBQyxHQUFHLENBQUMsQ0FBQztRQUNsQixJQUFJLElBQUksR0FBRyxDQUFDLENBQUMsR0FBRyxJQUFJLENBQUM7UUFDckIsSUFBSSxJQUFJLEdBQUcsQ0FBQyxDQUFDLEdBQUcsSUFBSSxDQUFDO1FBRXJCLElBQUksR0FBRyxHQUFHLElBQUksR0FBRSxDQUFDLENBQUM7UUFFbEIsSUFBSSxFQUFFLEdBQUcsQ0FBQyxDQUFDO1FBQ1gsSUFBSSxFQUFFLEdBQUcsQ0FBQyxDQUFDO1FBQ1gsR0FBRyxDQUFBLENBQUUsSUFBSSxDQUFDLEdBQUMsQ0FBQyxFQUFFLENBQUMsR0FBRyxDQUFDLEVBQUUsQ0FBQyxFQUFFLEVBQUUsQ0FBQztZQUMxQixFQUFFLEdBQUcsQ0FBQyxDQUFDLEVBQUUsR0FBRyxLQUFLLENBQUMsR0FBRyxDQUFDLENBQUMsRUFBRSxHQUFHLElBQUksQ0FBQyxHQUFHLEdBQUcsQ0FBQyxDQUFDLElBQUksQ0FBQyxDQUFDO1lBQy9DLEVBQUUsR0FBRyxDQUFDLENBQUMsRUFBRSxHQUFHLENBQUMsRUFBRSxHQUFHLElBQUksQ0FBQyxDQUFDLEdBQUcsQ0FBQyxDQUFDLEVBQUUsR0FBRyxDQUFDLEVBQUUsR0FBRyxJQUFJLENBQUMsQ0FBQyxDQUFDLElBQUksQ0FBQyxDQUFDO1FBQ3RELENBQUM7UUFDRCxJQUFJLEdBQUcsQ0FBQyxDQUFDLEVBQUUsR0FBRyxDQUFDLEVBQUUsR0FBRyxDQUFDLENBQUMsQ0FBQyxHQUFHLENBQUMsRUFBRSxHQUFHLENBQUMsRUFBRSxHQUFHLElBQUksQ0FBQyxDQUFDLENBQUM7UUFFN0MsTUFBTSxDQUFDLHFCQUFxQixDQUFDLElBQUksRUFBRSxLQUFLLENBQUMsQ0FBQztJQUMzQyxDQUFDO0lBbkJlLGtDQUFvQix1QkFtQm5DLENBQUE7SUFFRCwrQkFBZ0MsR0FBVyxFQUFFLElBQVc7UUFDdkQsSUFBSSxHQUFHLEdBQUcsQ0FBQyxDQUFDO1FBQ1osSUFBSSxHQUFHLEdBQUcsSUFBSSxDQUFDLEdBQUcsQ0FBQyxHQUFHLEVBQUUsSUFBSSxDQUFDLENBQUM7UUFDOUIsSUFBSSxDQUFDLEdBQUcsQ0FBQyxDQUFDO1FBQ1YsT0FBTyxHQUFHLEdBQUcsQ0FBQyxFQUFFLENBQUM7WUFDaEIsQ0FBQyxFQUFFLENBQUM7WUFDRixHQUFHLEtBQUssQ0FBQyxDQUFDO1FBQ2IsQ0FBQztRQUVELEdBQUcsQ0FBQyxDQUFDLElBQUksQ0FBQyxHQUFHLENBQUMsRUFBRSxDQUFDLEdBQUcsQ0FBQyxFQUFFLENBQUMsRUFBRSxFQUFFLENBQUM7WUFDNUIsSUFBSSxJQUFJLEdBQUcsQ0FBQyxJQUFJLENBQUMsQ0FBQztZQUNsQixJQUFJLENBQUMsR0FBRyxDQUFDLElBQUksR0FBRyxJQUFJLENBQUMsR0FBRyxDQUFDLEdBQUcsQ0FBQyxDQUFDLElBQUksQ0FBQyxDQUFDLEdBQUMsQ0FBQyxDQUFDLENBQUMsR0FBRyxDQUFDLENBQUM7WUFDN0MsSUFBSSxDQUFDLEdBQUcsQ0FBQyxHQUFHLEdBQUcsSUFBSSxDQUFDLEdBQUcsQ0FBQyxHQUFHLENBQUMsQ0FBQyxJQUFJLENBQUMsQ0FBQyxHQUFDLENBQUMsR0FBQyxDQUFDLENBQUMsQ0FBQyxHQUFHLENBQUMsQ0FBQztZQUM5QyxHQUFHLElBQUksQ0FBQyxHQUFHLENBQUMsQ0FBQztRQUNkLENBQUM7UUFFRCxNQUFNLENBQUMsR0FBRyxDQUFDO0lBQ1osQ0FBQztBQUNGLENBQUMsRUF4Q00sYUFBYSxLQUFiLGFBQWEsUUF3Q25CIn0=
