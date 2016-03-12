@@ -1,55 +1,41 @@
 module HilbertCurves{
 	export function toHilbertCoordinates( maxCoordinate: number, x: number, y: number ): number{
-		var rx: any, ry: any, s: number, hilbertIndex: number = 0;
+		var r = maxCoordinate;
+		var mask = (1 << r) - 1;
+		var hodd = 0;
+		var heven = x ^ y;
+		var notx = ~x & mask;
+		var noty = ~y & mask;
 
-		for( s = Math.floor(maxCoordinate/2); s > 0; s /= 2){
-			rx = (x & s) > 0;
-	        ry = (y & s) > 0;
-	        hilbertIndex += s * s * ((3 * rx) ^ ry);
-	        
-	        var rotated = rotate(s, x, y, rx, ry);
-	        x = rotated[0];
-	        y = rotated[1];
+		var tmp = notx ^y;
+
+		var v0 = 0;
+		var v1 = 0;
+		for( var k=1; k < r; k++ ){
+			v1 = ((v1 & heven) | ((v0 ^ noty) & tmp)) >> 1;
+			v0 = ((v0 & (v1 ^ notx)) | (~v0 & (v1 ^ noty))) >> 1;
+		}
+		hodd = (~v0 & (v1 ^ x)) | (v0 & (v1 ^ noty));
+
+		return hilbertInterleaveBits(hodd, heven);
+	}
+
+	function hilbertInterleaveBits( odd: number, even:number ): number{
+		var val = 0;
+		var max = Math.max(odd, even);
+		var n = 0;
+		while (max > 0) {
+			n++;
+		  	max >>= 1;
 		}
 
-		return hilbertIndex;
-	}
+		for (var i = 0; i < n; i++) {
+			var mask = 1 << i;
+			var a = (even & mask) > 0 ? (1 << (2*i)) : 0;
+			var b = (odd & mask) > 0 ? (1 << (2*i+1)) : 0;
+			val += a + b;
+		}
 
-	export function fromHilbertCoordinates( maxCoordinate: number, hilbertIndex: number ): number[] {
-		var x: number, y: number, rx: any, ry: any, s: number, t: number = hilbertIndex;
-	    
-	    x = y = 0;
-
-	    for ( s = 1; s < maxCoordinate; s *=2 ){
-	        rx = 1 & (t/2);
-	        ry = 1 & (t ^ rx);
-	        
-	        var rotated = rotate(s, x, y, rx, ry);
-	        x = rotated[0];
-	        y = rotated[1];
-	        
-	        x += s * rx;
-	        y += s * ry;
-	        t /= 4;
-	    }
-
-	    return [x, y];
-	}
-
-	function rotate( maxCoordinate: number, x: number, y: number, rx: any, ry: any ): number[]{
-		var t: number;
-
-		if (ry == 0) {
-	        if (rx == 1) {
-	            x = maxCoordinate-1 - x;
-	            y = maxCoordinate-1 - y;
-	        }
-
-	        //Swap x and y
-	        t  = x;
-	        x = y;
-	        y = t;
-	    }
-		return [x, y];
+		return val;
 	}
 }
