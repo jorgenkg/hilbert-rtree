@@ -1,3 +1,4 @@
+/// <reference path="../type-definitions/lodash.d.ts" />
 interface DataEntry{
 	x: number;
 	y: number;
@@ -35,8 +36,8 @@ class RTreeRectangle{
     	if( this.x === Infinity ){
     		this.height = anotherRect.height;
 	    	this.width = anotherRect.width;
-	    	this.x = Math.min( this.x, anotherRect.x );
-	    	this.y = Math.min( this.y, anotherRect.y );
+	    	this.x = anotherRect.x;
+	    	this.y = anotherRect.y;
     	}
     	else{
     		this.height = Math.max( this.y + this.height, anotherRect.y + anotherRect.height ) - Math.min( this.y, anotherRect.y );
@@ -44,17 +45,6 @@ class RTreeRectangle{
 	    	this.x = Math.min( this.x, anotherRect.x );
 	    	this.y = Math.min( this.y, anotherRect.y );
     	}
-    }
-
-    public recalculateBoundingValues(): void{
-    	this.height = 0;
-	    this.width = 0;
-	    this.x = Infinity;
-	    this.y = Infinity;
-    	
-    	_.each( this.children, ( child: RTreeRectangle ) => {
-    		this.growRectangleToFit( child );
-    	});
     }
 
     public areaIfGrownBy( anotherRect: RTreeRectangle ): number{
@@ -75,29 +65,30 @@ class RTreeRectangle{
     	var sibling1 = RTreeRectangle.generateEmptyNode();
     	var sibling2 = RTreeRectangle.generateEmptyNode();
 
-    	var maxCoordinate = _.chain( this.children )
-							.map(function( rect: RTreeRectangle ){
-								return Math.ceil(Math.max( rect.x + rect.width*0.5, rect.y + rect.height*0.5 ));
-							})
-							.thru( _.max )
-							.value();
-		
+    	var maxCoordinate = -Infinity;
+		var minCoordinate = Infinity;
+		var coordX: number, coordY: number;
+
+		_.each(this.children, function( rect: RTreeRectangle ){
+			coordX = Math.ceil( rect.x + rect.width*0.5 );
+			coordY = Math.ceil( rect.y + rect.height*0.5 );
+			maxCoordinate = Math.max( maxCoordinate, Math.max(coordX, coordY) );
+			minCoordinate = Math.min( minCoordinate, Math.min(coordX, coordY) );
+		});
+
 		var sorted = _.sortBy( this.children, function( rect: RTreeRectangle){
-			return HilbertCurves.toHilbertCoordinates( maxCoordinate, Math.ceil(rect.x + rect.width*0.5), Math.ceil(rect.y + rect.height*0.5) );
+			return HilbertCurves.toHilbertCoordinates( maxCoordinate-minCoordinate, Math.ceil(rect.x + rect.width*0.5)-minCoordinate, Math.ceil(rect.y + rect.height*0.5)-minCoordinate );
 		});
 
     	_.each( sorted, function ( rect: RTreeRectangle, i: number ){
     		if( i <= pivot ){
-    			sibling1.insertChildRectangle( sorted[i] );
+    			sibling1.insertChildRectangle( rect );
     		}
     		else{
-    			sibling2.insertChildRectangle( sorted[i] );	
+    			sibling2.insertChildRectangle( rect );	
     		}
     	});
-
-    	// Reset this rectangle's bounds since we have removed the "space spanning" children.
-    	this.x = this.y = Infinity;
-    	this.width = this.height = 0;
+    	
 
     	this.children.length = 0;
     	sorted.length = 0;
@@ -123,9 +114,9 @@ class RTreeRectangle{
 		this.growRectangleToFit( insertRect );
 	}
 
+
 	public removeChildRectangle( removeRect: RTreeRectangle ): void{
 		this.children.splice(  _.indexOf( this.children, removeRect ), 1 );
-		this.recalculateBoundingValues();
 	}
 
 	public getSubtreeData(): Array<RTreeRectangle>{
@@ -153,7 +144,7 @@ class RTree{
 			// tested that the query overlapped before we called the function on this child)
 			return node.getSubtreeData();
 		}
-		else if( !node.isLeafNode() ){
+		else {
 			// Recursively search the rectangles intersected by the search query rectangle.
         	return _.chain( node.children )
 					.filter( _.method("overlaps", searchRect ))
@@ -163,8 +154,6 @@ class RTree{
 					.flatten()
 					.value() as Array<RTreeRectangle>;
 		}
-		
-		throw "I'm pretty sure we shouldn't reach this point.";
 	}
 
 	public search( searchBoundary: DataEntry ): Array<any>{
@@ -225,15 +214,19 @@ class RTree{
 			return new RTreeRectangle( dataPoint.x, dataPoint.y, dataPoint.width, dataPoint.height, dataPoint.data );
 		});
 
-		var maxCoordinate = _.chain( listOfRectangles )
-							.map(function( rect: RTreeRectangle ){
-								return Math.ceil(Math.max( rect.x + rect.width*0.5, rect.y + rect.height*0.5 ));
-							})
-							.thru( _.max )
-							.value();
-		
+		var maxCoordinate = -Infinity;
+		var minCoordinate = Infinity;
+		var coordX: number, coordY: number;
+
+		_.each(listOfRectangles, function( rect: RTreeRectangle ){
+			coordX = Math.ceil( rect.x + rect.width*0.5 );
+			coordY = Math.ceil( rect.y + rect.height*0.5 );
+			maxCoordinate = Math.max( maxCoordinate, Math.max(coordX, coordY) );
+			minCoordinate = Math.min( minCoordinate, Math.min(coordX, coordY) );
+		});
+
 		var sorted = _.sortBy( listOfRectangles, function( rect: RTreeRectangle){
-			return HilbertCurves.toHilbertCoordinates( maxCoordinate, Math.ceil(rect.x + rect.width*0.5), Math.ceil(rect.y + rect.height*0.5) );
+			return HilbertCurves.toHilbertCoordinates( maxCoordinate-minCoordinate, Math.ceil(rect.x + rect.width*0.5)-minCoordinate, Math.ceil(rect.y + rect.height*0.5)-minCoordinate );
 		});
 
 		listOfRectangles.length = 0;
