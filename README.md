@@ -5,7 +5,7 @@ This is an implementation of a Hilbert Packed  R-Tree. R-Trees are a special dat
 ## Install
 
 ```
-npm intstall hilbert-rtree
+npm install hilbert-rtree
 ```
 
 ## Usage
