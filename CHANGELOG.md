@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### ⚠ BREAKING CHANGES
 
-* restructure code as an npm library
+* Rewritten project to be a drop-in solution for Hilbert packet R-trees. This release has revamped the code base, added inline-docs and improved TS typing. The deprecated T-tree demo is still available in the GH-pages branch.
 
 ### Features
 
@@ -16,4 +16,4 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Bug Fixes
 
-* calculated the wrong Hilbert value ([5242914](https://github.com/jorgenkg/hilbert-rtree/commit/5242914c6fc998847eeba72d6f9d63b20354f983))
+* calculated wrong Hilbert value ([5242914](https://github.com/jorgenkg/hilbert-rtree/commit/5242914c6fc998847eeba72d6f9d63b20354f983))
