@@ -1,4 +1,3 @@
-import * as assert from "assert";
 import { RTreeRectangle } from "./RTreeRectangle.js";
 import { sortRectanglesByHilbertCoordinates } from "../misc/sortRectanglesByHilbertCoordinates.js";
 import { splitIntoTwo } from "../misc/splitIntoTwo.js";
@@ -44,11 +43,21 @@ export class RTree {
   /** Find data records that overlap with the bounding box.
    * @returns List of `Record["data"]` from overlapped Records. */
   public search(searchBoundary: BoundingBox) {
-    assert(this.rootNode, "Expect tree to be created");
-    assert(searchBoundary.x >= 0, "Expect X coordinate to be >= 0");
-    assert(searchBoundary.y >= 0, "Expect Y coordinate to be >= 0");
-    assert(searchBoundary.height >= 0, "Expect `height` to be >= 0");
-    assert(searchBoundary.width >= 0, "Expect `width` to be >= 0");
+    if(this.rootNode === undefined) {
+      throw new Error("Expect tree to be created");
+    }
+    if(searchBoundary.x < 0) {
+      throw new Error("Expect X coordinate to be >= 0");
+    }
+    if(searchBoundary.y < 0) {
+      throw new Error("Expect Y coordinate to be >= 0");
+    }
+    if(searchBoundary.height < 0) {
+      throw new Error("Expect `height` to be >= 0");
+    }
+    if(searchBoundary.width < 0) {
+      throw new Error("Expect `width` to be >= 0");
+    }
 
     const searchRect = new RTreeRectangle(searchBoundary);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -60,10 +69,18 @@ export class RTree {
 
   /** Insert a single record to the RTree and re-balance the tree if it violates `maxChildrenPerNode`.  */
   public insert(record: Record): void {
-    assert(record.x >= 0, "Expect X coordinate to be >= 0");
-    assert(record.y >= 0, "Expect Y coordinate to be >= 0");
-    "height" in record && assert(record.height >= 0, "Expect `height` to be >= 0 if defined");
-    "width" in record && assert(record.width >= 0, "Expect `width` to be >= 0 if defined");
+    if(record.x < 0) {
+      throw new Error("Expect X coordinate to be >= 0");
+    }
+    if(record.y < 0) {
+      throw new Error("Expect Y coordinate to be >= 0");
+    }
+    if("height" in record && record.height < 0) {
+      throw new Error("Expect `height` to be >= 0 if defined");
+    }
+    if("width" in record && record.width < 0) {
+      throw new Error("Expect `width` to be >= 0 if defined");
+    }
 
     // Rectangle representation of the data point to insert into the RTree
     const insertRect = new RTreeRectangle(record);
@@ -151,13 +168,22 @@ export class RTree {
     /** List of data records to insert in a R-tree structure. */
     records: Array<Record>
   ) {
-    assert(this.rootNode === undefined, "Expect tree to be empty before batch inserting nodes");
-
+    if(this.rootNode !== undefined) {
+      throw new Error("Expect tree to be empty before batch inserting nodes");
+    }
     for(const record of records) {
-      assert(record.x >= 0, "Expect X coordinate to be >= 0");
-      assert(record.y >= 0, "Expect Y coordinate to be >= 0");
-      "height" in record && assert(record.height >= 0, "Expect `height` to be >= 0 if defined");
-      "width" in record && assert(record.width >= 0, "Expect `width` to be >= 0 if defined");
+      if(record.x < 0) {
+        throw new Error("Expect X coordinate to be >= 0");
+      }
+      if(record.y < 0) {
+        throw new Error("Expect Y coordinate to be >= 0");
+      }
+      if("height" in record && record.height < 0) {
+        throw new Error("Expect `height` to be >= 0 if defined");
+      }
+      if("width" in record && record.width < 0) {
+        throw new Error("Expect `width` to be >= 0 if defined");
+      }
     }
 
     const rectangles = records
@@ -170,7 +196,9 @@ export class RTree {
 
   /** Move `leaf` if the node's parent contains more than `maxChildrenPerNode` children. */
   private balanceTreePath(leaf: RTreeRectangle): void {
-    assert(leaf.isLeafNode(), "Expect the provided node to be a leaf node");
+    if(!leaf.isLeafNode()) {
+      throw new Error("Expect the provided node to be a leaf node");
+    }
 
     const observedNodes = [leaf.parent];
 

@@ -8,9 +8,6 @@
     "generate-docs": "npx typedoc --excludePrivate --hideGenerator --includeVersion --readme ./README.md --out docs index.ts"
   },
   "license": "MIT",
-  "engines": {
-    "node": ">=8"
-  },
   "files": [
     "build/lib",
     "build/index*"
@@ -28,7 +25,6 @@
     "hilbert r-tree",
     "hilbert curve"
   ],
-  "engineStrict": true,
   "devDependencies": {
     "@commitlint/cli": "16.0.1",
     "@commitlint/config-conventional": "16.0.0",

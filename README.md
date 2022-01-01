@@ -2,10 +2,16 @@
 
 This is an implementation of a Hilbert Packed  R-Tree without any external dependencies. R-Trees are a special data structure for indexing spatial data. To improve the performance of query operations on the data structure, the R-Tree may be packed using the space filling [Hilbert Curve](https://en.wikipedia.org/wiki/Hilbert_curve).
 
-## Install
+## Requirements
 
-```
-npm install hilbert-rtree
+This library may be used in browser environments and does not depend on NodeJS libraries.
+
+Without polyfilling, the implementation depends on features available in node `>= 8`.
+
+## Installation
+
+```bash
+npm i -S hilbert-rtree
 ```
 
 ## Usage
@@ -35,3 +41,8 @@ const result = tree.search(boundingRectangle);
 
 console.log(result); // -> prints: [ "This can be any data type" ]
 ```
+
+## API
+
+#### [Documentation is available here](https://jorgenkg.github.io/hilbert-rtree/index.html)
+
