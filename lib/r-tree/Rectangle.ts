@@ -43,4 +43,11 @@ export class Rectangle implements BoundingBox {
   public getArea(): number {
     return this.height * this.width;
   }
+
+  public getCenter(): { centerX: number; centerY: number; } {
+    return {
+      centerX: this.x + (this.width / 2),
+      centerY: this.y + (this.height / 2),
+    };
+  }
 }

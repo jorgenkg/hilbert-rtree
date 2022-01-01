@@ -7,11 +7,12 @@ export function sortRectanglesByHilbertCoordinates(rectangles: Array<RTreeRectan
   // size of the square, we must identify the max/min coordinates of the encapsulated
   // rectangles.
   const { maxCoordinate, minCoordinate } = rectangles
-    .map(rectangle => [
+    .map(rectangle => rectangle.getCenter())
+    .map(({ centerX, centerY }) => [
       // X coordinate
-      Math.ceil(rectangle.x + rectangle.width * 0.5),
+      Math.floor(centerX),
       // Y coordinate
-      Math.ceil(rectangle.y + rectangle.height * 0.5)
+      Math.floor(centerY)
     ])
     .reduce(({ maxCoordinate: accumulatedMax, minCoordinate: accumulatedMin }, [x, y]) => {
       return {
@@ -21,12 +22,13 @@ export function sortRectanglesByHilbertCoordinates(rectangles: Array<RTreeRectan
     }, { maxCoordinate: -Infinity, minCoordinate: Infinity });
 
   const weightedRectangles = rectangles
-    .map(rectangle => ({
+    .map(rectangle => ({ ...rectangle.getCenter(), rectangle }))
+    .map(({ rectangle, centerX, centerY }) => ({
       rectangle,
       weight: toHilbertCoordinates(
         maxCoordinate - minCoordinate,
-        Math.ceil(rectangle.x + rectangle.width * 0.5) - minCoordinate,
-        Math.ceil(rectangle.y + rectangle.height * 0.5) - minCoordinate
+        Math.floor(centerX) - minCoordinate,
+        Math.floor(centerY) - minCoordinate
       )
     }));
 
