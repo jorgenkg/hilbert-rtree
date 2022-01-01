@@ -23,12 +23,10 @@ export class RTree {
     if (node.containedBy(searchBoundingBox)) {
       // If the query rectangles encapsulates this node, any data points stored within the node
       // rectangle should be returned by the search.
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return node.getSubtreeData();
     }
     else if (node.isLeafNode() && node.overlaps(searchBoundingBox)) {
       // If the query overlaps a leaf node, the leaf data shall be returned.
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return node.getSubtreeData();
     }
     else {
@@ -60,10 +58,9 @@ export class RTree {
     }
 
     const searchRect = new RTreeRectangle(searchBoundary);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
     return this
       .recursiveSearchForOverlappingNodes(searchRect, this.rootNode)
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       .map(node => node.data);
   }
 
@@ -87,7 +84,7 @@ export class RTree {
 
     // Since the rootNode is not defined, this is the first node in the tree.
     if(!this.rootNode) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { data, ...boundingBox } = record;
       this.rootNode = new RTreeRectangle(boundingBox);
     }
