@@ -1,0 +1,182 @@
+{
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+      "ecmaVersion": 2020,    // Allows for the parsing of modern ECMAScript features.
+      "sourceType": "module",  // Allows for the use of imports.
+      "project": "./tsconfig.json"
+    },
+    "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/eslint-recommended",
+      "plugin:@typescript-eslint/recommended",      "plugin:@typescript-eslint/recommended-requiring-type-checking"
+    ],
+    "plugins": [
+      "sort-imports-es6-autofix"
+    ],
+    "rules": {
+      "@typescript-eslint/explicit-function-return-type": "off",
+      // Disallows calls to methods of the console object.
+      "no-console": "warn",
+      // Require semi colon.
+      "semi": "error",
+      // Enforces a consistent indentation style.
+      "indent": [
+        "error",
+        2
+      ],
+      // Enforces consistent line endings independent of operating system, VCS, or editor used across your codebase.
+      "linebreak-style": [
+        "error",
+        "unix"
+      ],
+      // Enforces the consistent use double quotes.
+      "quotes": [
+        "error",
+        "double"
+      ],
+      // Enforces parentheses around arrow function parameters, as needed.
+      "arrow-parens": [
+        "error",
+        "as-needed"
+      ],
+      // Enforces at least one newline (or absence thereof) at the end of non-empty files.
+      "eol-last": [
+        "error"
+      ],
+      // Enforce consistent spacing before function parentheses and as such.
+      "space-before-function-paren": [
+        "error",
+        {
+          "anonymous": "never",
+          "named": "never",
+          "asyncArrow": "never"
+        }
+      ],
+      // Create space before/after the arrow function's arrow.
+      "arrow-spacing": [
+        "error",
+        {
+          "before": true,
+          "after": true
+        }
+      ],
+      // Ensuring there are spaces around infix operators.
+      "space-infix-ops": [
+        "error",
+        {
+          "int32Hint": false
+        }
+      ],
+      // Enforce consistency of spacing before blocks.
+      "space-before-blocks": [
+        "warn",
+        "always"
+      ],
+      // Enforces consistent line breaks inside braces of object literals or destructuring assignments.
+      "object-curly-newline": [
+        "warn",
+        {
+          "multiline": true, 
+          "minProperties": 4
+        }
+      ],
+      // Enforces consistent spacing inside braces of object literals, destructuring assignments, and import/export specifiers.
+      "object-curly-spacing": [
+        "warn",
+        "always"
+      ],
+      // Enforces consistent brace style for blocks.
+      "brace-style": [
+        "warn",
+        "stroustrup"
+      ],
+      // Checks all import declarations and verifies that all imports are first sorted by the used member syntax and then alphabetically by the first member or alias name.
+      "sort-imports-es6-autofix/sort-imports-es6": [
+        "warn",
+        {
+          "ignoreCase": true,
+          "ignoreMemberSort": false,
+          "memberSyntaxSortOrder": [
+            "none",
+            "all",
+            "multiple",
+            "single"
+          ]
+        }
+      ],
+      // Enforce consistent spacing directly inside of parentheses, by disallowing or requiring one or more spaces to the right of ( and to the left of ).
+      "space-in-parens": [
+        "error",
+        "never"
+      ],
+      // Enforce consistency of spacing after the start of a comment // or /*.
+      "spaced-comment": [
+        "error",
+        "always",
+        {
+          "exceptions": [
+            "-",
+            "+"
+          ]
+        }
+      ],
+      // Enforces consistent spacing between keys and values in object literal properties.
+      "key-spacing": [
+        "error",
+        {
+          "afterColon": true
+        }
+      ],
+      // Disallow multiple whitespace around logical expressions, conditional expressions, declarations, array elements, object properties, sequences and function parameters.
+      "no-multi-spaces": [
+        "error"
+      ],
+      // Declare variables first, rather than having ES6 hoisting them to the top of the scope
+      "no-use-before-define": [
+        "error",
+        {
+          "functions": false,
+          "classes": false
+        }
+      ],
+      // Do not recreate variables with existing/identical names
+      "no-shadow": "off",
+      "@typescript-eslint/no-shadow": "error",
+      // Remove trailing whitespaces immediately, rather than possibly having unnecessary one-line changes in git later
+      "no-trailing-spaces": "warn",
+      // Require trailing commas on multiline array and objects
+      "comma-dangle": [
+        "warn",
+        {
+          "arrays": "only-multiline",
+          "objects": "only-multiline"
+        }
+      ],
+      // Do not include spacing in object property lookups like object["somekey"]
+      "computed-property-spacing": [
+        "warn",
+        "never"
+      ],
+      // Require spacing after comma, forbid before
+      "comma-spacing": "warn",
+      // Require use of 'let' and 'const'
+      "no-var": "error",
+      // Add an additional set of parathesis around iife functions to hint the reader about the iife
+      "wrap-iife": [
+        "warn",
+        "outside"
+      ],
+      // Require triple equals. The behavior of double equals might not behave as the coder expects
+      "eqeqeq": "error",
+      // Prefer dot notation referencing in object notation. Eg: object["somekey"] => object.somekey
+      "dot-notation": "warn",
+      // Require curly brackets on all if/else/for statements
+      "curly": "error",
+      "@typescript-eslint/no-misused-promises": [
+        "error",
+        {
+          "checksVoidReturn": false
+        }
+      ]
+    }
+  }

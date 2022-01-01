@@ -1,0 +1,1 @@
+{"version":3,"file":"BoundingBox.d.ts","sourceRoot":"","sources":["../../../lib/@types/BoundingBox.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,KAAK;IACpB,CAAC,EAAE,MAAM,CAAC;IACV,CAAC,EAAE,MAAM,CAAC;CACX;AAED,MAAM,WAAW,WAAY,SAAQ,KAAK;IACxC,KAAK,EAAE,MAAM,CAAC;IACd,MAAM,EAAE,MAAM,CAAC;CAChB"}

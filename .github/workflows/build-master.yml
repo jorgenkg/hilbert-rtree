@@ -1,0 +1,94 @@
+name: Build and release master
+
+on:
+  push:
+    branches: [ master ]
+    paths-ignore:
+      - 'CHANGELOG.md'
+      - docs
+      - example
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@v2
+    - name: Use Node.js 17
+      uses: actions/setup-node@v2
+      with:
+        node-version: 17
+    - name: Install packages
+      run: npm ci && npm run postinstall --if-present
+    - name: Transpile with Typescript
+      run: npm run dist --if-present
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Run tests
+      run: npm run test --if-present
+  
+  echoPendingChangelog:
+    name: Render pending changelog
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Use Node.js
+      uses: actions/setup-node@v2
+    - name: Generate standard version changelog
+      run: |
+        npm ci
+        npx standard-version --skip.commit --skip.tag
+        UPDATED_VERSION=$(jq '.version' --raw-output package.json)
+        npx changelog-parser | jq --raw-output --arg UPDATED_VERSION "$UPDATED_VERSION" '.versions[] | select(.version==$UPDATED_VERSION).body | if . != "" then . else "[[empty]]" end'
+  
+  release:
+    needs: build
+    name: Create release
+    runs-on: ubuntu-latest
+    environment:
+      name: publishing
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Use Node.js
+      uses: actions/setup-node@v2
+    - name: Install packages
+      run: npm ci && npm run postinstall --if-present
+    - name: Tag release and push to Github
+      run: |
+        set -e
+
+        git config --local user.name "Github Actions"
+        git config --local user.email "github-actions@example.com"
+
+        git pull origin master
+
+        npm run release
+
+        npm run generate-docs
+        git add -A
+        git commit -q -m "chore: updated typedocs"
+
+        git push --tags origin master
+    - name: Publish to NPM
+      uses: JS-DevTools/npm-publish@v1
+      with:
+        token: ${{ secrets.NPM_TOKEN }}

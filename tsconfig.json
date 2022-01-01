@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "noImplicitAny": true,
-    "module": "commonjs",
-	"removeComments": true,
-	"inlineSourceMap":true
+    "target": "ES2018",
+    "module": "CommonJS",
+    "outDir": "./build",
+    "strict": true,
+    "moduleResolution": "Node",
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": false,
+    "inlineSourceMap": true,
+    "inlineSources": true,
   },
-  "exclude": [
-    "type-definitions",
-    "libs",
-    "node_modules"
-  ]
+  "include": ["lib", "test", "index.ts", "example" ]
 }

@@ -1,0 +1,1 @@
+{"version":3,"file":"DataPoint.d.ts","sourceRoot":"","sources":["../../../lib/@types/DataPoint.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,WAAW,EAAE,KAAK,EAAE,MAAM,kBAAkB,CAAC;AAE3D,oBAAY,SAAS,CAAC,CAAC,GAAG,GAAG,IAAI,CAAC,WAAW,GAAG,KAAK,CAAC,GAAG;IACvD,IAAI,CAAC,EAAE,CAAC,CAAC;CACV,CAAC"}
