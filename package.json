@@ -1,6 +1,6 @@
 {
   "name": "hilbert-rtree",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "scripts": {
     "test": "./node_modules/.bin/tape --enable-source-maps --unhandled-rejections=strict build/test/integration/*.js",
     "release": "npm run dist && npx standard-version -a",
