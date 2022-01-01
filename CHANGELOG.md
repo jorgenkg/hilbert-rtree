@@ -1,0 +1,19 @@
+# Changelog
+
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+## 1.0.0 (2022-01-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* restructure code as an npm library
+
+### Features
+
+* restructure code as an npm library ([f05d950](https://github.com/jorgenkg/hilbert-rtree/commit/f05d9504d4545367702ded9f2e4727902f4c7bda))
+
+
+### Bug Fixes
+
+* calculated the wrong Hilbert value ([5242914](https://github.com/jorgenkg/hilbert-rtree/commit/5242914c6fc998847eeba72d6f9d63b20354f983))
