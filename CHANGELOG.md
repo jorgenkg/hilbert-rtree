@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.0.2](https://github.com/jorgenkg/hilbert-rtree/compare/v2.0.1...v2.0.2) (2022-01-01)
+
+
+### Bug Fixes
+
+* remove dependency on nodejs lib "assert" ([5f6e6f5](https://github.com/jorgenkg/hilbert-rtree/commit/5f6e6f5f1b0e2635144acad9b887cdd0c86aaca1))
+
 ### [2.0.1](https://github.com/jorgenkg/hilbert-rtree/compare/v2.0.0...v2.0.1) (2022-01-01)
 
 ## 2.0.0 (2022-01-01)
