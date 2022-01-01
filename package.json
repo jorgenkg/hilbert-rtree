@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "test": "./node_modules/.bin/tape --enable-source-maps --unhandled-rejections=strict build/test/integration/*.js",
+    "release": "npm run dist && npx standard-version -a",
     "dist": "rm -rf dist/ && npx tsc --build tsconfig.prod.json",
     "generate-docs": "npx typedoc --excludePrivate --hideGenerator --includeVersion --readme ./README.md --out docs index.ts"
   },
