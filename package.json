@@ -26,7 +26,7 @@
     "hilbert curve"
   ],
   "devDependencies": {
-    "@commitlint/cli": "16.0.1",
+    "@commitlint/cli": "16.0.2",
     "@commitlint/config-conventional": "16.0.0",
     "@types/node": "17.0.6",
     "@types/tape": "4.13.2",
