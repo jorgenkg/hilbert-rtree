@@ -20,7 +20,7 @@ jobs:
     - name: Check out repository code
       uses: actions/checkout@v2
     - name: Use Node.js 17
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v3
       with:
         node-version: 17
     - name: Install packages
@@ -28,7 +28,7 @@ jobs:
     - name: Transpile with Typescript
       run: npm run dist --if-present
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
     - name: Run tests
@@ -46,7 +46,7 @@ jobs:
       with:
         fetch-depth: 0
     - name: Use Node.js
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v3
     - name: Generate standard version changelog
       run: |
         npm ci
@@ -69,7 +69,7 @@ jobs:
       with:
         fetch-depth: 0
     - name: Use Node.js
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v3
     - name: Install packages
       run: npm ci && npm run postinstall --if-present
     - name: Tag release and push to Github
