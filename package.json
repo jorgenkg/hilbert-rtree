@@ -37,7 +37,7 @@
     "eslint-plugin-sort-imports-es6-autofix": "0.6.0",
     "husky": "7.0.4",
     "patch-package": "6.4.7",
-    "standard-version": "9.3.2",
+    "standard-version": "9.5.0",
     "tape": "5.5.3",
     "typedoc": "0.22.15",
     "typedoc-plugin-missing-exports": "0.22.6",
