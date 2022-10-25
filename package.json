@@ -36,7 +36,7 @@
     "eslint": "8.26.0",
     "eslint-plugin-sort-imports-es6-autofix": "0.6.0",
     "husky": "7.0.4",
-    "patch-package": "6.4.7",
+    "patch-package": "6.5.0",
     "standard-version": "9.5.0",
     "tape": "5.6.1",
     "typedoc": "0.23.18",
