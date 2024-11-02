@@ -32,7 +32,7 @@
     "@types/tape": "4.13.4",
     "@typescript-eslint/eslint-plugin": "5.62.0",
     "@typescript-eslint/parser": "5.62.0",
-    "changelog-parser": "2.8.1",
+    "changelog-parser": "3.0.1",
     "eslint": "8.57.1",
     "eslint-plugin-sort-imports-es6-autofix": "0.6.0",
     "husky": "7.0.4",
